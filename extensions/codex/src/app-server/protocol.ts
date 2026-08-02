@@ -215,6 +215,7 @@ export type CodexTurn = {
 
 export type CodexThread = {
   id: string;
+  canAcceptDirectInput?: boolean | null;
   sessionId?: string;
   name?: string | null;
   preview?: string | null;

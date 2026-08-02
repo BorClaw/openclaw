@@ -3420,6 +3420,41 @@ describe("runCodexAppServerAttempt", () => {
     ]);
   });
 
+  it("starts immediately when a resumed active turn accepts direct input", async () => {
+    const sessionFile = path.join(tempDir, "session.jsonl");
+    const workspaceDir = path.join(tempDir, "workspace");
+    await writeExistingBinding(sessionFile, workspaceDir, { dynamicToolsFingerprint: "[]" });
+    const harness = createAppServerHarness(async (method) => {
+      if (method === "thread/resume") {
+        const response = threadStartResult("thread-existing");
+        return {
+          ...response,
+          thread: {
+            ...response.thread,
+            canAcceptDirectInput: true,
+            status: { type: "active", activeFlags: [] },
+            turns: [{ id: "turn-active", status: "inProgress", items: [] }],
+          },
+        };
+      }
+      if (method === "turn/start") {
+        return turnStartResult("turn-active");
+      }
+      return {};
+    });
+
+    const run = runCodexAppServerAttempt(createParams(sessionFile, workspaceDir));
+    await harness.waitForMethod("turn/start");
+    await harness.completeTurn({ threadId: "thread-existing", turnId: "turn-active" });
+    await run;
+
+    expect(harness.requests.map((request) => request.method)).toEqual([
+      "thread/resume",
+      "turn/start",
+      "thread/unsubscribe",
+    ]);
+  });
+
   it("does not retry turn/start for non-compact active turns", async () => {
     const sessionFile = path.join(tempDir, "session.jsonl");
     const workspaceDir = path.join(tempDir, "workspace");

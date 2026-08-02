@@ -2220,7 +2220,9 @@ export async function runCodexAppServerAttempt(
   };
   const activeNativeTurnIds =
     thread.lifecycle.action === "resumed" ? (thread.lifecycle.activeTurnIds ?? []) : [];
-  if (activeNativeTurnIds.length > 0) {
+  const activeNativeTurnBlocksDirectInput =
+    thread.lifecycle.action === "resumed" && thread.lifecycle.canAcceptDirectInput !== true;
+  if (activeNativeTurnIds.length > 0 && activeNativeTurnBlocksDirectInput) {
     // A resumed Codex thread can already be running a native compact/review turn.
     // Starting an OpenClaw turn before that native turn completes can wedge the
     // accepted turn behind a completion event we intentionally ignore.

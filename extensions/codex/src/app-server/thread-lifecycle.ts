@@ -67,6 +67,7 @@ export type CodexAppServerThreadLifecycle = {
   action: "started" | "resumed";
   rotatedContextEngineBinding?: boolean;
   activeTurnIds?: string[];
+  canAcceptDirectInput?: boolean;
 };
 
 export type CodexAppServerThreadLifecycleBinding = CodexAppServerThreadBinding & {
@@ -707,6 +708,7 @@ export async function startOrResumeThread(params: {
           action: "resumed",
         });
         const activeTurnIds = readActiveCodexTurnIds(response.thread);
+        const canAcceptDirectInput = response.thread.canAcceptDirectInput;
         return {
           ...resumeBinding,
           threadId: response.thread.id,
@@ -731,6 +733,7 @@ export async function startOrResumeThread(params: {
           lifecycle: {
             action: "resumed",
             ...(activeTurnIds.length ? { activeTurnIds } : {}),
+            ...(typeof canAcceptDirectInput === "boolean" ? { canAcceptDirectInput } : {}),
           },
         };
       } catch (error) {
